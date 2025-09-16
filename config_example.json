@@ -1,5 +1,12 @@
 {
-  "open_weather_api": {
-    "api_key": "YOUR_API_KEY"
-  }
+  "api_key": "YOUR_API_KEY",
+  "lat": 52.52437,
+  "lon": 13.41053,
+  "units": "metric",
+  "exclude": [
+    "minutely",
+    "hourly",
+    "daily",
+    "alerts"
+  ]
 }
