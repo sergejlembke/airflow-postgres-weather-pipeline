@@ -5,13 +5,12 @@ import psycopg2
 
 def create_tables():
     # If running this script on the host machine, use localhost and port 5432.
-    # If running inside the Airflow container, use host="postgres" (the docker-compose service name).
+    # If running inside the Airflow Docker container, use host="postgres" (the docker-compose service name).
     conn = psycopg2.connect(
         dbname="weather",
         user="airflow",
         password="airflow",
-        host="localhost",
-        port=5432,
+        host="postgres"
     )
     cur = conn.cursor()
 
@@ -25,6 +24,3 @@ def create_tables():
     conn.commit()
     cur.close()
     conn.close()
-
-
-create_tables()
