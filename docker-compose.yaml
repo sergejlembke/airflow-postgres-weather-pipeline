@@ -17,7 +17,8 @@ services:
 
 
   airflow:
-    image: apache/airflow:3.0.3
+    build: .
+    image: apache/airflow:3.0.6
     restart: always
     depends_on:
       postgres:
@@ -25,12 +26,14 @@ services:
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__FERNET_KEY: "fernet_key"
-      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/weather
+      PYTHONPATH: /opt/airflow
     volumes:
       - ./dags:/opt/airflow/dags
       - ./scripts:/opt/airflow/scripts
       - ./sql:/opt/airflow/sql
+      - ./config.json:/opt/airflow/config.json:ro
     ports:
       - "8080:8080"
     command: standalone
