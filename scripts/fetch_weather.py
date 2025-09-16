@@ -4,23 +4,20 @@ import os
 import requests
 
 
-def get_weather(lat, lon):
-    api_key = get_api_key()
-    url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={api_key}&units=metric'
-    response = requests.get(url)
-    data = response.json()
-    return data
-
-
-def get_api_key():
+def get_weather(ti):
+    print("Start: Extract weather data")
     config_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
     with open(config_path, 'r') as f:
         config = json.load(f)
-    return config['api_key']
 
+    api_key = config['api_key']
+    lat = config['lat']
+    lon = config['lon']
+    units = config['units']
+    exclude = config['exclude']
 
-lat = 52.52437
-lon = 13.41053
-
-weather = get_weather(lat, lon)
-print(json.dumps(weather, indent=4))
+    url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude={exclude}&appid={api_key}&units={units}'
+    response = requests.get(url)
+    data = response.json()
+    ti.xcom_push(key='data', value=data)
+    print("Finished: Extract weather data")
