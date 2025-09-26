@@ -39,8 +39,8 @@ def get_weather(ti) -> Dict[str, Any]:
 
     # API endpoint (requires subscription on OpenWeather)
     url = (
-        "https://api.openweathermap.org/data/3.0/onecall"
-        f"?lat={lat}&lon={lon}&exclude={exclude_param}&appid={api_key}&units={units}"
+        'https://api.openweathermap.org/data/3.0/onecall'
+        f'?lat={lat}&lon={lon}&exclude={exclude_param}&appid={api_key}&units={units}'
     )
 
     try:
@@ -71,9 +71,9 @@ def get_weather(ti) -> Dict[str, Any]:
 def transform_weather(ti):
     print("Start: Transforming weather data")
     # Pull the data pushed by the extract task under key='data_api_raw'
-    data_raw = ti.xcom_pull(task_ids='extract_weather_from_api_task', key='data_api_raw')
+    data_raw = ti.xcom_pull(task_ids='extract_weather_from_api', key='data_api_raw')
     if data_raw is None:
-        raise ValueError("No data received from 'extract_weather_from_api_task'. Ensure the extract task pushes data or returns it.")
+        raise ValueError("No data received from task 'extract_weather_from_api'. Ensure the extract task pushes data or returns it.")
 
     data_transformed = {
         'lat_lon': f"{data_raw['lat']}, {data_raw['lon']}",
@@ -92,23 +92,24 @@ def transform_weather(ti):
 
 def load_weather_to_postgres(ti):
     print("Start: Loading weather data")
-    data = ti.xcom_pull(task_ids='transform_weather_data_task', key='data_transformed')
+    # Pull the data pushed by the transform task under key='data_transformed'
+    data = ti.xcom_pull(task_ids='transform_weather_data', key='data_transformed')
 
     try:
         print("Connecting to Postgres")
         # If running this script on the host machine, use localhost and port 5432.
         # If running inside the Airflow container, use host="postgres" (the docker-compose service name).
         conn = psycopg2.connect(
-            dbname="weather",
-            user="airflow",
-            password="airflow",
-            host="postgres"
+            dbname='weather',
+            user='airflow',
+            password='airflow',
+            host='postgres'
         )
         cur = conn.cursor()
 
         cur.execute(
             """
-            INSERT INTO weather_raw (lat_lon, datetime, temperature, humidity, wind_speed, raw_json)
+            INSERT INTO weather_interval (lat_lon, datetime, temperature, humidity, wind_speed, raw_json)
             VALUES (%s, %s, %s, %s, %s, %s)
             """,
             (
