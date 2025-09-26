@@ -2,11 +2,8 @@
 
 A containerized data pipeline built with Apache Airflow and PostgreSQL that periodically fetches weather data from the
 OpenWeather One Call API, transforms it, and stores it in a Postgres database.
-
-- Extracts current weather data for configured coordinates
-- Transforms and normalizes the payload
-- Loads raw and aggregated results into Postgres tables
-- Ships with a one-shot DB init DAG and a scheduled ETL DAG
+Second step is to aggregate and summarize the data, stored in a new table.
+It is designed for easy setup and customization via Docker and a simple JSON config file.
 
 ---
 
@@ -14,9 +11,9 @@ OpenWeather One Call API, transforms it, and stores it in a Postgres database.
 
 - 📥 Extract current weather from OpenWeather One Call API
 - 🧭 Configurable coordinates, units, and excluded sections via `config.json`
-- 🔁 Scheduled ETL every 5 minutes (customizable)
+- 🔁 Scheduled ETL every 5 minutes
 - 🗄️ PostgreSQL storage with raw JSON preserved (JSONB)
-- 🧮 Will be added in the future: Daily summary of data and report (`daily-summary-dag.py`)
+- 🧮 Scheduled ETL to aggregate and summarize daily data in new table
 - 🐳 Dockerized setup using `docker-compose`
 
 ---
@@ -90,22 +87,27 @@ The file is mounted read-only in the Airflow container at `/opt/airflow/config.j
     - Docker > Containers > airflow > Logs > 2nd log entry:
     - `Password for user 'admin': ExamplePassword`
 4. Initialize the database tables (one-time):
-    - DAG: `init-db-dag` (scheduled `@once`) — trigger if not already run
-5. Run the ETL:
-    - DAG: `weather-etl-dag` — scheduled every 5 minutes by default and will start automatically (
+    - DAG: `init_db` - scheduled `@once`, trigger if not already run
+5. Run the streaming ETL:
+    - DAG: `weather_etl` - scheduled every 5 minutes by default and will start automatically (
       DAGS_ARE_PAUSED_AT_CREATION=false)
+6. Run the daily aggregation and summary:
+    - DAG: `aggregate_daily` - scheduled `@daily` to aggregate yesterday's data into `weather_daily_summary`.
 
 DAG overview:
 
-- `init-db-dag`: Calls `scripts.create_tables.create_tables()` to execute `sql/create_tables.sql` and create tables in
+- `init_db`: Calls `scripts.create_tables.create_tables()` to execute `sql/create_tables.sql` and create tables in
   Postgres.
-- `weather-etl-dag`:
-    - `extract_weather_from_api_task`: `scripts.fetch_weather.get_weather()` — calls OpenWeather and pushes data via
-      XCom (key=`data`).
-    - `transform_weather_data_task`: `scripts.transform_weather.transform_weather()` — builds a `city` label and
-      converts epoch to timestamp.
-    - `load_weather_to_postgres_task`: `scripts.load_weather.load_weather_to_postgres()` — inserts into `weather_raw`
-      with `raw_json` preserved.
+- `weather_etl`: Calls the following functions in `scripts.extract_transform_load_raw`:
+    - `get_weather`
+    - `transform_weather`
+    - `load_weather_to_postgres` (inserts into
+      `weather_interval` with `raw_json` preserved)
+- `aggregate_daily`: Calls the following functions in `scripts.aggregate_daily_data`:
+    - `get_postgres`
+    - `transform_to_df`
+    - `aggregate_daily_data`
+    - `load_daily_data`
 
 ---
 
@@ -113,41 +115,55 @@ DAG overview:
 
 Defined in `sql/create_tables.sql`:
 
-- `weather_raw`
+- `weather_interval` (raw ingested measurements)
     - id SERIAL PRIMARY KEY
-    - city TEXT
-    - datetime TIMESTAMP
-    - temperature FLOAT
-    - humidity FLOAT
-    - wind_speed FLOAT
-    - raw_json JSONB
-    - created_at TIMESTAMP DEFAULT NOW()
+    - lat_lon TEXT
+        - datetime TIMESTAMP
+        - temperature FLOAT
+        - humidity FLOAT
+        - wind_speed FLOAT
+        - raw_json JSONB
+        - created_at TIMESTAMP DEFAULT NOW()
 
-- `weather_daily_summary` (scaffold for aggregations)
+- `weather_daily_summary` (aggregated per day)
     - id SERIAL PRIMARY KEY
-    - city TEXT
-    - date DATE
-    - avg_temp FLOAT
-    - max_temp FLOAT
-    - min_temp FLOAT
-    - created_at TIMESTAMP DEFAULT NOW()
+    - lat_lon TEXT
+        - date DATE
+        - avg_temp FLOAT
+        - max_temp FLOAT
+        - min_temp FLOAT
+        - created_at TIMESTAMP DEFAULT NOW()
 
 ---
 
-## 📊 Example Query
+## 📊 Example Queries
 
 From the host, after the pipeline has run at least once:
 
 ```bash
 # Enter the Postgres container
-docker compose exec -it postgres psql -U airflow -d weather -c "SELECT city, datetime, temperature, humidity, wind_speed FROM weather_raw ORDER BY id DESC LIMIT 5;"
+docker compose exec -it postgres psql -U airflow -d weather -c "SELECT lat_lon, datetime, temperature, humidity, wind_speed FROM weather_interval ORDER BY id DESC LIMIT 5;"
 ```
 
-Example output (columns):
+Example output from table `weather_interval` (columns):
 
-| city         | datetime            | temperature | humidity | wind_speed |
+| lat_lon      | datetime            | temperature | humidity | wind_speed |
 |--------------|---------------------|-------------|----------|------------|
 | 52.52,13.405 | 2025-09-02 10:44:22 | 23.1        | 58       | 4.2        |
+| 52.52,13.405 | 2025-09-02 10:49:32 | 23.2        | 58       | 4.1        |
+| 52.52,13.405 | 2025-09-02 10:54:39 | 23.2        | 59       | 4.1        |
+
+```bash
+# Query aggregated daily summary
+docker compose exec -it postgres psql -U airflow -d weather -c "SELECT lat_lon, date, avg_temp, max_temp, min_temp FROM weather_daily_summary ORDER BY id DESC LIMIT 5;"
+```
+
+Example output from table `weather_daily_summary` (columns):
+
+| lat_lon      | date       | avg_temp | max_temp | min_temp |
+|--------------|------------|----------|----------|----------|
+| 52.52,13.405 | 2025-09-01 | 23.1     | 29.3     | 17.5     |
+| 52.52,13.405 | 2025-09-02 | 25.2     | 29.9     | 20.2     |
 
 ---
 
@@ -158,7 +174,7 @@ Example output (columns):
     - Check container logs: `docker compose logs -f airflow`.
 - Postgres connection errors:
     - The Airflow tasks connect to host `postgres` (service name) with DB `weather`.
-    - Ensure the Postgres healthcheck passes and the `init-db-dag` has run.
+    - Ensure the Postgres healthcheck passes and the `init_db` DAG has run.
 - Build fails on psycopg2:
     - Use `psycopg2-binary` to avoid compiling from source.
 - API returns errors or empty data:
