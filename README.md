@@ -118,21 +118,21 @@ Defined in `sql/create_tables.sql`:
 - `weather_interval` (raw ingested measurements)
     - id SERIAL PRIMARY KEY
     - lat_lon TEXT
-        - datetime TIMESTAMP
-        - temperature FLOAT
-        - humidity FLOAT
-        - wind_speed FLOAT
-        - raw_json JSONB
-        - created_at TIMESTAMP DEFAULT NOW()
+    - datetime TIMESTAMP
+    - temperature FLOAT
+    - humidity FLOAT
+    - wind_speed FLOAT
+    - raw_json JSONB
+    - created_at TIMESTAMP DEFAULT NOW()
 
 - `weather_daily_summary` (aggregated per day)
     - id SERIAL PRIMARY KEY
     - lat_lon TEXT
-        - date DATE
-        - avg_temp FLOAT
-        - max_temp FLOAT
-        - min_temp FLOAT
-        - created_at TIMESTAMP DEFAULT NOW()
+    - date DATE
+    - avg_temp FLOAT
+    - max_temp FLOAT
+    - min_temp FLOAT
+    - created_at TIMESTAMP DEFAULT NOW()
 
 ---
 
