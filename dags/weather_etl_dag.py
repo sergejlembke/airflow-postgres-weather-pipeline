@@ -1,9 +1,23 @@
+# -*- coding: utf-8 -*-
+# ======================================
+# Airflow DAG: Weather ETL
+# ======================================
+# Defines the DAG that extracts, transforms, and loads weather data from
+# OpenWeather into Postgres.
+#
+# Author: Sergej Lembke
+# License: See LICENSE file
+# ======================================
+
+# --- Standard library imports ---
 from datetime import datetime, timezone
 
+# --- Third-party imports ---
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
 
+# --- Local module imports ---
 from scripts.extract_transform_load_raw import get_weather, load_weather_to_postgres, transform_weather
 
 with DAG(
