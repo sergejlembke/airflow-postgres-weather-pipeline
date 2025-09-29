@@ -1,8 +1,22 @@
+# -*- coding: utf-8 -*-
+# ======================================
+# Airflow DAG: Aggregate Daily Weather
+# ======================================
+# Defines the DAG that aggregates daily weather metrics from interval data
+# and loads a daily summary into Postgres.
+#
+# Author: Sergej Lembke
+# License: See LICENSE file
+# ======================================
+
+# --- Standard library imports ---
 from datetime import datetime, timezone
 
+# --- Third-party imports ---
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 
+# --- Local module imports ---
 from scripts.aggregate_daily_data import get_postgres, transform_to_df, aggregate_daily_data, load_daily_data
 
 with DAG(
