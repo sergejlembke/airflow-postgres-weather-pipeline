@@ -11,6 +11,7 @@
 
 # --- Standard library imports ---
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Any, Dict
@@ -18,6 +19,8 @@ from typing import Any, Dict
 # --- Third-party imports ---
 import psycopg2
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def get_weather(ti) -> Dict[str, Any]:
@@ -31,7 +34,7 @@ def get_weather(ti) -> Dict[str, Any]:
       a message indicating subscription is required.
     - PythonOperator log shows the actual value.
     """
-    print("Start: Extract weather data")
+    logger.info("Start: Extract weather data")
 
     # Load config from the repository root
     config_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
@@ -78,16 +81,16 @@ def get_weather(ti) -> Dict[str, Any]:
 
     # Push to XCom for downstream tasks and also return the data for visibility
     ti.xcom_push(key='data_api_raw', value=data)
-    print("Finished: Extract weather data")
+    logger.info("Finished: Extract weather data")
     return data
 
 
 def transform_weather(ti):
-    print("Start: Transforming weather data")
+    logger.info("Start: Transforming weather data")
     # Pull the data pushed by the extract task under key='data_api_raw'
     data_raw = ti.xcom_pull(task_ids='extract_weather_from_api', key='data_api_raw')
     if data_raw is None:
-        raise ValueError("No data received from task 'extract_weather_from_api'. Ensure the extract task pushes data or returns it.")
+        raise ValueError("No data received from task 'extract_weather_from_api'. Ensure the task pushes data or returns it.")
 
     data_transformed = {
         'lat_lon': f"{data_raw['lat']}, {data_raw['lon']}",
@@ -100,17 +103,19 @@ def transform_weather(ti):
 
     # Push to XCom for downstream tasks and also return the data for visibility
     ti.xcom_push(key='data_transformed', value=data_transformed)
-    print("Finished: Transforming weather data")
+    logger.info("Finished: Transforming weather data")
     return data_transformed
 
 
 def load_weather_to_postgres(ti):
-    print("Start: Loading weather data")
+    logger.info("Start: Loading weather data")
     # Pull the data pushed by the transform task under key='data_transformed'
     data = ti.xcom_pull(task_ids='transform_weather_data', key='data_transformed')
+    if data is None:
+        raise ValueError("No data received from task 'transform_weather_data'. Ensure the task pushes data or returns it.")
 
     try:
-        print("Connecting to Postgres")
+        logger.info("Connecting to Postgres")
         # If running this script on the host machine, use localhost and port 5432.
         # If running inside the Airflow container, use host="postgres" (the docker-compose service name).
         conn = psycopg2.connect(
@@ -140,6 +145,10 @@ def load_weather_to_postgres(ti):
         cur.close()
         conn.close()
 
-        print("Finished: Loading weather data")
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        logger.info("Finished: Loading weather data")
+    except psycopg2.DatabaseError:
+        logger.exception("Database error while inserting interval weather into Postgres")
+        raise
+    except Exception:
+        logger.exception("Unexpected error while inserting interval weather into Postgres")
+        raise
