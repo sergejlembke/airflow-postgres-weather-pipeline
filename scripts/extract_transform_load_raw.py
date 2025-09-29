@@ -56,6 +56,7 @@ def get_weather(ti) -> Dict[str, Any]:
         f'?lat={lat}&lon={lon}&exclude={exclude_param}&appid={api_key}&units={units}'
     )
 
+    response = None
     try:
         response = requests.get(url, timeout=30)
         # Raise for obvious HTTP errors
