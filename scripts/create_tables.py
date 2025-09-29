@@ -1,5 +1,17 @@
+# -*- coding: utf-8 -*-
+# ======================================
+# Database Initialization Utilities
+# ======================================
+# Helper function to create the required Postgres tables from the SQL schema.
+#
+# Author: Sergej Lembke
+# License: See LICENSE file
+# ======================================
+
+# --- Standard library imports ---
 import os
 
+# --- Third-party imports ---
 import psycopg2
 
 
