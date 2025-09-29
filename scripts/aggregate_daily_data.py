@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+# ======================================
+# Aggregation Utility Functions (Daily)
+# ======================================
+# Helper functions to fetch interval weather data from Postgres, aggregate
+# daily metrics, and load the daily summary.
+#
+# Author: Sergej Lembke
+# License: See LICENSE file
+# ======================================
+
+# --- Third-party imports ---
 import pandas as pd
 import psycopg2
 from psycopg2.extras import DictCursor, DictRow
