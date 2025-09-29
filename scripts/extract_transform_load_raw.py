@@ -1,8 +1,21 @@
+# -*- coding: utf-8 -*-
+# ======================================
+# ETL Utility Functions (Raw Interval)
+# ======================================
+# Helper functions to extract weather data from OpenWeather API, transform it,
+# and load the interval records into Postgres.
+#
+# Author: Sergej Lembke
+# License: See LICENSE file
+# ======================================
+
+# --- Standard library imports ---
 import json
 import os
 from datetime import datetime
 from typing import Any, Dict
 
+# --- Third-party imports ---
 import psycopg2
 import requests
 
