@@ -34,7 +34,7 @@ Clone the repository and build/start the stack:
 git clone https://github.com/your-user/airflow-postgres-weather-pipeline.git
 cd airflow-postgres-weather-pipeline
 
-# Build and start (Windows PowerShell / macOS / Linux)
+# Build and start
 docker compose up -d --build
 ```
 
@@ -48,6 +48,7 @@ If you prefer a local Python setup instead of Docker, ensure Python 3.10+ and in
 
 ```bash
 python -m venv venv
+
 # Windows
 venv\Scripts\activate
 # macOS/Linux
@@ -61,10 +62,12 @@ pip install -r requirements.txt
 
 1. Copy the example config and adjust values
    ```bash
+   # macOS/Linux
    cp config_example.json config.json
+   
    # Windows (PowerShell)
    Copy-Item config_example.json config.json
-   ```
+    ```
 2. Edit `config.json` fields:
     - `api_key`: Your OpenWeather API key
     - `lat`, `lon`: Coordinates to fetch weather for
@@ -191,9 +194,10 @@ or https://www.gnu.org/licenses/gpl-3.0.en.html for details.
 
 ## 🧩 Third-Party Dependencies
 
-- Apache Airflow (base image)
+- Apache Airflow
 - psycopg2-binary
 - requests
+- pandas
 
 See `requirements.txt` for exact versions.
 
