@@ -14,7 +14,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 # --- Third-party imports ---
 import psycopg2
@@ -23,7 +23,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def get_weather(ti) -> Dict[str, Any]:
+def get_weather(ti) -> dict[str, Any]:
     """
     Fetch weather data from OpenWeather One Call API and push to XCom.
 
