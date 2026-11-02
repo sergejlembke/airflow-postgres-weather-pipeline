@@ -1,4 +1,4 @@
-# 🌤️ Airflow Weather ETL Pipeline
+# Airflow Weather ETL Pipeline
 
 A containerized data pipeline built with Apache Airflow and PostgreSQL that periodically fetches weather data from the
 OpenWeather One Call API, transforms it, and stores it in a Postgres database.
@@ -7,18 +7,18 @@ It is designed for easy setup and customization via Docker and a simple JSON con
 
 ---
 
-## ✨ Features
+## Features
 
-- 📥 Extract current weather from OpenWeather One Call API
-- 🧭 Configurable coordinates, units, and excluded sections via `config.json`
-- 🔁 Scheduled ETL every 5 minutes
-- 🗄️ PostgreSQL storage with raw JSON preserved (JSONB)
-- 🧮 Scheduled ETL to aggregate and summarize daily data in new table
-- 🐳 Dockerized setup using `docker-compose`
+- Extract current weather from OpenWeather One Call API
+- Configurable coordinates, units, and excluded sections via `config.json`
+- Scheduled ETL every 5 minutes
+- PostgreSQL storage with raw JSON preserved (JSONB)
+- Scheduled ETL to aggregate and summarize daily data in new table
+- Dockerized setup using `docker-compose`
 
 ---
 
-## 🛠 Installation
+## Installation
 
 You can run the entire stack using Docker. The Airflow image is extended to install project requirements.
 
@@ -58,7 +58,7 @@ pip install -r requirements.txt
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 1. Copy the example config and adjust values
    ```bash
@@ -78,7 +78,7 @@ The file is mounted read-only in the Airflow container at `/opt/airflow/config.j
 
 ---
 
-## 🚀 Usage
+## Usage
 
 1. Start the stack:
    ```bash
@@ -114,7 +114,7 @@ DAG overview:
 
 ---
 
-## 📂 Database Schema
+## Database Schema
 
 Defined in `sql/create_tables.sql`:
 
@@ -139,7 +139,7 @@ Defined in `sql/create_tables.sql`:
 
 ---
 
-## 📊 Example Queries
+## Example Queries
 
 From the host, after the pipeline has run at least once:
 
@@ -170,7 +170,7 @@ Example output from table `weather_daily_summary` (columns):
 
 ---
 
-## 🧪 Troubleshooting
+## Troubleshooting
 
 - Airflow shows no DAGs:
     - Ensure `PYTHONPATH=/opt/airflow` is set (it is configured in `docker-compose.yaml`).
@@ -185,14 +185,14 @@ Example output from table `weather_daily_summary` (columns):
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the GNU GPL-3.0 License — see the LICENSE file
 or https://www.gnu.org/licenses/gpl-3.0.en.html for details.
 
 ---
 
-## 🧩 Third-Party Dependencies
+## Third-Party Dependencies
 
 - Apache Airflow
 - psycopg2-binary
@@ -203,14 +203,7 @@ See `requirements.txt` for exact versions.
 
 ---
 
-## 🔒 Disclaimer
+## Disclaimer
 
 This project is intended for educational and personal use. Ensure your use of the OpenWeather API complies with their
 Terms of Service and local regulations.
-
----
-
-## 🙌 Contribution
-
-Contributions are welcome! Please open issues and pull requests for enhancements, bug fixes, or documentation
-improvements.
